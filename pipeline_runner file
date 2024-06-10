@@ -1,0 +1,129 @@
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ cat pipeline_runner.sh 
+#!/bin/bash
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case $key in
+        -H|--host)
+        HOST="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -P|--port)
+        PORT="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -p|--protocol)
+        PROTOCOL="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -m|--meta-csv)
+        META1_CSV="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        -r|--report-file)
+        REPORT_FILE="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        *)    # unknown option
+        shift # past argument
+        ;;
+    esac
+done
+
+# Set default values if not provided
+if [[ $PORT = "" ]];then
+
+BASE_URL="${BASE_URL:-$PROTOCOL://$HOST}"
+else
+
+BASE_URL="${BASE_URL:-$PROTOCOL://$HOST:$PORT}"
+
+fi
+META1_CSV="${META1_CSV:-/install/framework/bin/meta1.csv}"
+REPORT_FILE="${REPORT_FILE:-/install/framework/bin/pipeline1_report.txt}"
+
+# Initialize the report file
+echo "Pipeline Execution Report" > "$REPORT_FILE"
+echo "" >> "$REPORT_FILE"
+
+# Check if the meta1.csv file exists
+if [ -f "$META1_CSV" ]; then
+
+    # Loop over each line in the CSV file
+    tail -n +2 "$META1_CSV" | while IFS=',' read -r Application Name UUID Token Version; do
+        echo "Executing pipeline for $Application - $Name..."
+        # Remove leading and trailing spaces from variables
+        UUID=$(echo "$UUID" | tr -d '[:space:]')
+        TOKEN=$(echo "$Token" | tr -d '[:space:]')
+        Version=$(echo "$Version" | tr -d '[:space:]')
+        echo "TOKEN ::: $TOKEN VERSION::: $Version  UUID::: $UUID"
+
+        # Execute pipeline
+        EXECUTION_RESULT=$(curl --location --request POST "$BASE_URL/framework/dag/execute?uuid=$UUID&version=$Version" \
+                                --header "token: $TOKEN")
+
+        # Check if POST request was successful
+        if [ $? -eq 0 ]; then
+
+            # Extract new UUID and version from the execution result
+            NEW_UUID=$(echo "$EXECUTION_RESULT" | jq -r '.ref.uuid')
+            NEW_VERSION=$(echo "$EXECUTION_RESULT" | jq -r '.ref.version')
+            # Continuously check pipeline status until it reaches "COMPLETED" stage
+            while true; do
+                STATUS_RESULT=$(curl --location "$BASE_URL/framework/dag/getStatusByDagExec?action=view&DagExecUuid=$NEW_UUID" \
+                                  --header "token: $TOKEN")
+
+                # Check if status request was successful
+                if [ $? -eq 0 ]; then
+                    echo "Pipeline status fetched successfully:"
+                    LATEST_STATUS=$(echo "$STATUS_RESULT" | jq -r '.status | if type == "array" then .[-1].stage else . end')
+
+                    # Handle different status scenarios
+                    case $LATEST_STATUS in
+                        COMPLETED)
+                        echo "Pipeline completed successfully for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break
+                        ;;
+                        FAILED)
+                        echo "Pipeline failed for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break
+                        ;;
+                        TERMINATED)
+                        echo "Pipeline terminated for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break
+                        ;;
+                        KILLED)
+                        echo "Pipeline killed for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break
+                        ;;
+                        *)
+                        echo "Pipeline is still running for $Application - $Name. Current status: $LATEST_STATUS. Waiting for completion."
+                        sleep 10
+                        ;;
+                    esac
+                else
+                    echo "Error: Failed to fetch pipeline status."
+                    exit 1
+                fi
+            done
+        else
+            echo "Error: Failed to execute pipeline for $Application - $Name."
+            exit 1
+        fi
+    done
+else
+    echo "Error: meta1.csv file not found."
+    exit 1
+fi
+

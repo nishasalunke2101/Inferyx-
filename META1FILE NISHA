@@ -1,0 +1,108 @@
+Application-Claim Fraud Analytics
+Name-ppl_e2e_risk_scoring
+uuid-dc2d708a-a0ae-4ff8-911c-7d2cb453bf37
+Token-2YeYlkdrV4GVbF8VlSR4wcJcM9MeMiO6kO8wko57
+Version-1650720036069
+
+
+Application-Credit Card Fraud Detection
+Name-ppl_cc_fraud_detection
+uuid-5570ea7e-4c29-4fbe-bfc1-354738a34e2d
+Token-37zoXvNhLBh9AIccJWUOy1fUTsnqnJk3nBpprF3F
+Version-1624009801
+================================================================================================================================================================================================
+
+===============================================================test.inferyx.com=================================================================================================================
+
+
+Application-Anti Money Laundering
+Name-ppl_populate_warehouse
+uuid-3005dde7-21aa-4277-afef-e5be129cc932
+Token-yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2
+Version-1595125597
+
+Application-Anti Money Laundering
+Name-ppl_suspicious_activity_prediction
+uuid-4c2252fc-ff2b-4424-b658-8615efcb01f9
+Token-yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2
+Version-1677142787095
+
+
+Application-Claim Fraud Analytics
+Name-ppl_e2e_risk_scoring
+uuid-dc2d708a-a0ae-4ff8-911c-7d2cb453bf37
+Token-aBqh23PQYaUytMBpQfALiU4o1KmtAWjaeJYYPL8f
+Version-1650720036069
+
+
+Application-Credit Card Fraud Detection
+Name-ppl_cc_fraud_detection
+
+uuid-5570ea7e-4c29-4fbe-bfc1-354738a34e2d
+
+Token-0LRdv0R1XscMaXpEr8ppAjtqPnnBXqocCrtUeKmZ
+Version-1624009801
+
+
+Application-Credit Risk Analytics
+
+Name-ppl_e2e_credit_risk_analytics
+uuid-9fb2f5fd-7d8a-4de4-80a4-0da3c6988d7b
+
+
+Token-FKtqDgmQeoo3BJqqeAdKSJhO7TcEDMWDYFVwdcAm
+Version-1696427476662
+
+
+Application-Customer Analytics
+
+Name-ppl_customer_marketing_scoring
+uuid-b8d2bb13-605f-41e3-ac59-5126a3853815
+Token-wQzrUfBiBgaTT8jhiT0U54WxqCqoXPkepGQafsGX
+Version-1602336020
+
+Application-Enterprise Data Warehouse
+
+Name-ppl_sample_matrix_dag
+uuid-645eb0b4-717c-4ef9-9498-63ec6a57a303
+Token-SxI0hzQDGa64uzsp3ocuXdlUaEoOMIaraqZFSooR
+Version-1704388601706
+
+
+Application-HR Analytics
+Name-ppl_e2e_employee_attrition
+
+uuid-49a42d97-1c36-48d8-9307-a8c4f3627288
+
+Token-NL2vlLk2wPUGxGvxsIHlvxCSOWlBojBcFWWysiSx
+Version-1649080610749
+
+
+
+Application-Sanctions Screening
+Name-run_e2e_sanctions_screening
+
+uuid-062572c5-579e-423a-a48c-cb57f3df39b8
+
+Token-azb6CfpXE4uy4H2g6LUbCM4ucSki3WuQ1CrNyJfI
+Version-1649081831823
+
+
+
+Application-Transaction Flow Analytics
+
+Name-ppl_transaction_flow_analytics
+
+uuid-d03dfb5a-e1b1-4843-aa03-664e509099f7
+
+Token-fmiDwlV7Vy1krVvXmjwgxO1dGG8UeCnxiIcG4mIS
+Version-1605286189
+
+
+
+Application-
+Name-
+uuid-
+Token-
+Version-
+

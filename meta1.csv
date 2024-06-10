@@ -1,0 +1,27 @@
+Application,Name,uuid,Token,Version
+Anti Money Laundering,ppl_suspicious_activity_prediction,4c2252fc-ff2b-4424-b658-8615efcb01f9,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1677142787095
+Anti Money Laundering,ppl_e2e_rule_engine,c26f6f2f-dfd6-4279-89f0-dae2debb0333,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1564627324
+
+
+
+
+Application,Name,uuid,Token,Version
+Anti Money Laundering,ppl_e2e_rule_engine,c26f6f2f-dfd6-4279-89f0-dae2debb0333,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1677142787095
+Anti Money Laundering,ppl_suspicious_activity_prediction,4c2252fc-ff2b-4424-b658-8615efcb01f9,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1677142787095
+
+
+
+
+
+
+Application,Name,uuid,Token,Version
+Anti Money Laundering,ppl_suspicious_activity_prediction,4c2252fc-ff2b-4424-b658-8615efcb01f9,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1677142787095
+Anti Money Laundering,ppl_populate_warehouse,3005dde7-21aa-4277-afef-e5be129cc932,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1595125597
+Anti Money Laundering,ppl_e2e_rule_engine,c26f6f2f-dfd6-4279-89f0-dae2debb0333,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1564627324
+Claim Fraud Analytics,ppl_e2e_risk_scoring,dc2d708a-a0ae-4ff8-911c-7d2cb453bf37,tegZWF59QYtFOxC6mJR3AP6elgTsGHDhatJFE1Im,1650720036069
+Credit Card Fraud Detection,ppl_cc_fraud_detection,5570ea7e-4c29-4fbe-bfc1-354738a34e2d,q2TAMUoSf8Nl28rTXWADMZ3Jkir31t233YZ4nbQs,1624009801
+Credit Risk Analytics,ppl_e2e_credit_risk_analytics,9fb2f5fd-7d8a-4de4-80a4-0da3c6988d7b,uGv3kqZDBnL6jIMXxB7bGz4SuBwMIDPSQ17Sz0lA,1696427476662
+
+
+
+

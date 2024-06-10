@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Read token, UUID, and version from meta1.csv file
+META1_CSV="/install/framework/bin/meta1.csv"
+
+if [ -f "$META1_CSV" ]; then
+    echo "Reading token, UUID, and version from meta1.csv file:"
+
+    # Loop over each line in the CSV file
+    tail -n +2 "$META1_CSV" | while IFS=',' read -r Application Name UUID Token Version; do
+        echo "Executing pipeline for $Application - $Name..."
+        
+        # Remove leading and trailing spaces from variables
+        UUID=$(echo "$UUID" | tr -d '[:space:]')
+        Token=$(echo "$Token" | tr -d '[:space:]')
+        Version=$(echo "$Version" | tr -d '[:space:]')
+
+        # Execute pipeline
+  #      EXECUTION_RESULT=$(curl --location --request POST "https://test.inferyx.com/framework/dag/execute?uuid=$UUID&version=$Version" \
+  #          --header "token: $Token" \
+  #          --header "Cookie: JSESSIONID=096965879497E9065A7BC7B05B309AA2")
+
+     Executing_Result=$(curl --location --request POST 'http://192.168.1.141:8080/framework/dag/execute?uuid=4c2252fc-ff2b-4424-b658-8615efcb01f9&version=1677142787095' \
+	--header 'token: yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2' \
+	--header 'Cookie: JSESSIONID=6B68BC4306F7380D2657AC435596ABF7')
+
+
+        # Check if POST request was successful
+        if [ $? -eq 0 ]; then
+            echo "Pipeline execution successful for $Application - $Name."
+            echo "$EXECUTION_RESULT"
+
+            # Extracting the new UUID and version from the execution result
+            NEW_UUID=$(echo "$EXECUTION_RESULT" | jq -r '.ref.uuid')
+            NEW_VERSION=$(echo "$EXECUTION_RESULT" | jq -r '.ref.version')
+
+            # Check if new UUID and version are empty
+            if [ -z "$NEW_UUID" ] || [ -z "$NEW_VERSION" ]; then
+                echo "Error: Failed to extract new UUID or version."
+                exit 1
+            fi
+
+            echo "New UUID: $NEW_UUID"
+            echo "New Version: $NEW_VERSION"
+
+            # Continuously check pipeline status until it reaches "COMPLETED" stage
+            while true; do
+            #    STATUS_RESULT=$(curl --location "https://test.inferyx.com/framework/dag/getStatusByDagExec?action=view&DagExecUuid=$NEW_UUID" \
+            #        --header "token: $Token" \
+            #        --header "Cookie: JSESSIONID=096965879497E9065A7BC7B05B309AA2")
+                
+                # Check if status request was successful
+                if [ $? -eq 0 ]; then
+                    echo "Pipeline status fetched successfully:"
+                    #echo "$STATUS_RESULT"
+
+                    # Extract the latest status stage
+                    LATEST_STATUS=$(echo "$STATUS_RESULT" | jq -r '.status[-1].stage')
+
+                    # Check if the latest status stage is "COMPLETED"
+                    if [ "$LATEST_STATUS" = "COMPLETED" ]; then
+                        echo "Pipeline completed successfully for $Application - $Name."
+                        break  # Break out of the loop
+                    elif [ "$LATEST_STATUS" = "FAILED" ]; then
+                        echo "Pipeline failed for $Application - $Name."
+                        break  # Break out of the loop
+                        # Add actions for when the pipeline fails
+                    elif [ "$LATEST_STATUS" = "TERMINATED" ]; then
+                        echo "Pipeline terminated for $Application - $Name."
+                        break  # Break out of the loop
+                        # Add actions for when the pipeline is terminated
+                    elif [ "$LATEST_STATUS" = "KILLED" ]; then
+                        echo "Pipeline killed for $Application - $Name."
+                        break  # Break out of the loop
+                        # Add actions for when the pipeline is killed
+                    else
+                        echo "Pipeline is still running for $Application - $Name. Current status: $LATEST_STATUS. Waiting for completion..."
+                        sleep 10  # Wait for 10 seconds before checking again
+                    fi
+                else
+                    echo "Error: Failed to fetch pipeline status."
+                    exit 1
+                fi
+            done
+
+        else
+            echo "Error: Failed to execute pipeline for $Application - $Name."
+            exit 1
+        fi
+    done
+
+else
+    echo "Error: meta1.csv file not found."
+    exit 1
+fi

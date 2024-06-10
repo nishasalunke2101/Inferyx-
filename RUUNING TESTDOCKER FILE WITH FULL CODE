@@ -1,0 +1,138 @@
+today -31/5/24
+=====================================================================================================================
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ cat pipeline_report.txt 
+Pipeline Execution Report
+
+Anti Money Laundering - ppl_e2e_rule_engine: COMPLETED
+Application-Claim Fraud Analytics - ppl_e2e_risk_scoring: KILLED
+Application-Credit Card Fraud Detection - ppl_cc_fraud_detection: KILLED
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ 
+
+=====================================================================================================================
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ cat meta1.csv 
+Application,Name,uuid,Token,Version
+Anti Money Laundering,ppl_e2e_rule_engine,c26f6f2f-dfd6-4279-89f0-dae2debb0333,yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2,1564627324
+Application-Claim Fraud Analytics,ppl_e2e_risk_scoring,dc2d708a-a0ae-4ff8-911c-7d2cb453bf37,2YeYlkdrV4GVbF8VlSR4wcJcM9MeMiO6kO8wko57,1650720036069
+Application-Credit Card Fraud Detection,ppl_cc_fraud_detection,5570ea7e-4c29-4fbe-bfc1-354738a34e2d,37zoXvNhLBh9AIccJWUOy1fUTsnqnJk3nBpprF3F,1624009801
+
+=====================================================================================================================
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ cat config.cfg 
+# Configuration for pipeline execution script
+
+# Base URL for API endpoint
+BASE_URL="http://192.168.1.107:8080/framework/"
+
+# Endpoint for executing pipeline
+EXECUTE_ENDPOINT="dag/execute"
+
+# Endpoint for checking pipeline status
+STATUS_ENDPOINT="dag/getStatusByDagExec"
+
+# Session ID for authentication
+JSESSIONID="495A8E23F9874F8CD5520AA0CE25E5FB"
+
+=====================================================================================================================
+
+my script 
+
+
+inferyx@inferyx-Vostro-15-3510:/install/framework/bin$ cat testdockerautomation.sh
+
+
+#!/bin/bash
+
+# Read configuration from config.cfg file
+source config.cfg
+
+# Read token, UUID, and version from meta1.csv file
+META1_CSV="/install/framework/bin/meta1.csv"
+REPORT_FILE="/install/framework/bin/pipeline_report.txt"
+
+# Initialize the report file
+echo "Pipeline Execution Report" > "$REPORT_FILE"
+#echo "=========================" >> "$REPORT_FILE"
+echo "" >> "$REPORT_FILE"
+
+if [ -f "$META1_CSV" ]; then
+    echo "Reading token, UUID, and version from meta1.csv file:"
+
+    # Loop over each line in the CSV file
+    tail -n +2 "$META1_CSV" | while IFS=',' read -r Application Name UUID Token Version; do
+        echo "Executing pipeline for $Application - $Name..."
+        
+        # Remove leading and trailing spaces from variables
+        UUID=$(echo "$UUID" | tr -d '[:space:]')
+        Token=$(echo "$Token" | tr -d '[:space:]')
+        Version=$(echo "$Version" | tr -d '[:space:]')
+
+        # Execute pipeline
+        EXECUTION_RESULT=$(curl --location --request POST "$BASE_URL$EXECUTE_ENDPOINT?uuid=$UUID&version=$Version" \
+            --header "Cookie: JSESSIONID=$JSESSIONID")
+
+        # Check if POST request was successful
+        if [ $? -eq 0 ]; then
+            echo "Pipeline execution successful for $Application - $Name."
+            echo "$EXECUTION_RESULT"
+
+            # Extracting the new UUID and version from the execution result
+            NEW_UUID=$(echo "$EXECUTION_RESULT" | jq -r '.ref.uuid')
+            NEW_VERSION=$(echo "$EXECUTION_RESULT" | jq -r '.ref.version')
+
+            # Check if new UUID and version are empty
+            if [ -z "$NEW_UUID" ] || [ -z "$NEW_VERSION" ]; then
+                echo "Error: Failed to extract new UUID or version."
+                exit 1
+            fi
+
+            echo "New UUID: $NEW_UUID"
+            echo "New Version: $NEW_VERSION"
+
+            # Continuously check pipeline status until it reaches "COMPLETED" stage
+            while true; do
+                STATUS_RESULT=$(curl --location "$BASE_URL$STATUS_ENDPOINT?action=view&DagExecUuid=$NEW_UUID&token=$Token" \
+                    --header "Cookie: JSESSIONID=$JSESSIONID")
+
+                # Check if status request was successful
+                if [ $? -eq 0 ]; then
+                    echo "Pipeline status fetched successfully:"
+                    # Extract the latest status stage
+                    LATEST_STATUS=$(echo "$STATUS_RESULT" | jq -r '.status | if type == "array" then .[-1].stage else . end')
+
+                    # Check if the latest status stage is "COMPLETED"
+                    if [ "$LATEST_STATUS" = "COMPLETED" ]; then
+                        echo "Pipeline completed successfully for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break  # Break out of the loop
+                    elif [ "$LATEST_STATUS" = "FAILED" ]; then
+                        echo "Pipeline failed for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break  # Break out of the loop
+                    elif [ "$LATEST_STATUS" = "TERMINATED" ]; then
+                        echo "Pipeline terminated for $Application - $Name."
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break  # Break out of the loop
+                    elif [ "$LATEST_STATUS" = "KILLED" ]; then
+                        echo "Pipeline killed for $Application - $Name."
+                        # Append the pipeline status to the report file
+                        echo "$Application - $Name: $LATEST_STATUS" >> "$REPORT_FILE"
+                        break  # Break out of the loop
+                    else
+                       echo "Pipeline is still running for $Application - $Name. Current status: $LATEST_STATUS. Waiting for completion." 
+                       sleep 10  # Wait for 10 seconds before checking again
+                    fi
+                else
+                    echo "Error: Failed to fetch pipeline status."
+                    exit 1
+                fi
+            done
+        else
+            echo "Error: Failed to execute pipeline for $Application - $Name."
+            exit 1
+        fi
+    done
+else
+    echo "Error: meta1.csv file not found."
+    exit 1
+fi
+
+

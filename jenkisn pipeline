@@ -1,0 +1,88 @@
+pipeline {
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        string(name: "IPDOMAIN", defaultValue: 'http://test.inferyx.com', description: 'Enter IP or domain main')
+    }
+  
+stages {
+stage('Calling API') {
+    steps {
+        script {
+            //echo "already done"
+            //sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+             sh "/install/framework/bin/pipeline_runner.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+            //  if (env.TOKEN == '') {
+            //      sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+            //  } else {
+            //      sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -t ${env.TOKEN} -e ${EMAIL}"
+            //  }
+        }
+    }
+}
+    stage('Sending build completed notification') {
+      steps {
+        script {
+                emailext(attachLog: false, 
+		compressLog: false,
+		mimeType: 'text/html',
+		replyTo: '',             
+		from: 'dev-installer@inferyx.com', 
+		to: '${EMAIL}',
+		subject: "Pipeline Status",
+                body: """
+		        <!DOCTYPE html>
+			<html>
+			<head>
+				<style>
+					table {
+					  font-family: arial, sans-serif;
+					  border-collapse: collapse;
+					  width: 100%;
+					}
+
+					td, th {
+					  border: 1px solid #dddddd;
+					  text-align: left;
+					  padding: 8px;
+					}
+
+					tr:nth-child(even) {
+					  background-color: #dddddd;
+					}
+					h2{
+						text-align: center;
+						background-color: green;
+						}
+				</style>
+			</head>
+				<body>
+
+				<h2>Pipeline Testing Report</h2>
+                
+				<table>
+				  <tr>
+				    <th>IPDOMAIN</th>
+				    <th>Senderr</th>
+				  </tr>
+				  <tr>
+				     <td>${IPDOMAIN}</td>
+				    <td>Report sending by API</td>
+				  </tr>
+				</tabl
+
+				</body>
+			</html>
+
+                """                
+		)
+            
+            }
+      }
+
+    }
+}
+}
+

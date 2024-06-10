@@ -1,0 +1,5 @@
+Pipeline Execution Report
+=========================
+
+Anti Money Laundering - ppl_e2e_rule_engine: COMPLETED
+Claim Fraud Analytics - ppl_e2e_risk_scoring: FAILED

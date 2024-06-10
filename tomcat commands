@@ -1,0 +1,49 @@
+db.createUser(
+ {
+   user: "inferyx",
+   pwd: "20Inferyx19",
+    "roles" : [
+       {
+           "role" : "read",
+           "db" : "framework"
+       },
+       {
+           "role" : "readWrite",
+           "db" : "framework"
+       },
+       {
+           "role" : "dbAdmin",
+           "db" : "framework"
+       },
+       
+   ]
+ }
+);
+
+
+
+
+
+
+
+
+
+dev patch ke time time wo build no krna hai
+aur sheet mai update hona (Release note sheet )
+
+db.auth("inferyx", "20Inferyx!9")
+
+
+tail less /opt/tomcat/logs/catalina.out
+
+ps -ef |grep java
+
+tail -f 1000 /opt/tomcat/logs/catalina.out 
+
+ps -ef |grep tomcat
+
+
+lsof -i :8080
+
+ tail -n 1000 /opt/apache-tomcat-9.0.80/logs/catalina.out
+

@@ -1,0 +1,250 @@
+
+
+FULL N FINAL MONGODB BACK SCRIPT BY GOPAL SIR COMPLETED 
+
+
+
+RUN BY USING --- 
+running method changed 
+eg (  1573  ./backupscript.sh -t mongodb -u inferyx -p 20Inferyx19 -d framework -h localhost -P 27017 -b /backup -s inferyx -r 1 -a true)
+
+
+
+
+inferyx@wks-003:/install/framework/bin$ cat server_backup.sh 
+#!/bin/bash
+
+# Function to show usage
+
+usage() {
+    echo "Usage: $0"
+    echo "  -t <db_type>"
+    echo "  -u <username>"
+    echo "  -p <password>"
+    echo "  -d <database_names>"
+    echo "  -H <hostname>"
+    echo "  -P <port>"
+    echo "  -a <aws_snap(true/false)>"
+    echo "  -s <s3_bucketname>"
+    echo "  -r <retention_days>"
+    exit 1
+}
+
+# Function to log errors
+log_error() {
+   echo $1
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - ERROR: $1" >> backup.log
+}
+
+log_info() {
+    echo $1
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - INFO: $1" >> backup.log
+}
+
+
+# Function to create EC2 snapshot
+create_ec2_snapshot() {
+    if [[ "$AWS_SNAP" == "true" && "$AWS_SNAP" != "" ]]; then
+        INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+        SNAPSHOT_ID=$(aws ec2 create-snapshot --description "EC2 snapshot on $CURRENT_DATE" --volume-id $INSTANCE_ID --query SnapshotId --output text)
+        if [ -n "$SNAPSHOT_ID" ]; then
+            echo "EC2 snapshot created: $SNAPSHOT_ID"
+            echo $SNAPSHOT_ID > snapshot_id.txt  
+        else
+            log_error "EC2 snapshot creation failed"
+            exit 1
+        fi
+    fi
+}
+
+# Function to check EC2 snapshot status
+check_snapshot_status() {
+    if [ -f "snapshot_id.txt" ]; then
+        SNAPSHOT_ID=$(<snapshot_id.txt)
+        STATUS=$(aws ec2 describe-snapshots --snapshot-ids $SNAPSHOT_ID --query 'Snapshots[*].State' --output text)
+        echo "Snapshot status: $STATUS"
+    else
+        log_error "Snapshot ID file not found"
+    fi
+}
+
+# Parse arguments
+while getopts ":t:u:p:d:H:P:a:b:s:r:" opt; do
+    case $opt in
+        t) DB_TYPE="$OPTARG" ;;
+        u) DB_USERNAME="$OPTARG" ;;
+        p) DB_PASSWORD="$OPTARG" ;;
+        d) DB_NAMES="$OPTARG" ;;  # Accept comma-separated list of database names
+        H) DB_HOSTNAME="$OPTARG" ;;
+        P) DB_PORT="$OPTARG" ;;
+        a) AWS_SNAP="$OPTARG" ;;
+        s) S3_BUCKET="$OPTARG" ;;
+        r) RETENTION_DAYS="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
+
+# Check for mandatory arguments
+if [ -z "$DB_TYPE" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$DB_NAMES" ] || [ -z "$DB_HOSTNAME" ] || [ -z "$DB_PORT" ] || [ -z "$S3_BUCKET" ] || [ -z "$RETENTION_DAYS" ]; then
+    usage
+fi
+
+
+
+# Current date
+CURRENT_DATE=$(date +"%Y-%m-%d-%H-%M-%S")
+BACKUP_DIR="backup"
+# Database backup function
+backup_database() {
+    if [ "$DB_TYPE" == "mysql" ]; then
+        IFS=',' read -ra DB_ARRAY <<< "$DB_NAMES"  # Split database names into an array
+        for DB_NAME in "${DB_ARRAY[@]}"; do
+            BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${CURRENT_DATE}.sql.gz"
+            mysqldump -h $DB_HOSTNAME -P $DB_PORT -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME | gzip > $BACKUP_FILE
+            if [ -f "$BACKUP_FILE" ]; then
+                log_info "Database backup successful: $BACKUP_FILE"
+            else
+                log_error "Database backup failed for $DB_NAME"
+                exit 1
+            fi
+        done
+    else
+        case $DB_TYPE in
+            mongodb)
+               log_info "Taking mongo backup...."
+                BACKUP_FILE="/$BACKUP_DIR/${DB_NAMES}_${CURRENT_DATE}.gz"
+                mongodump --host $DB_HOSTNAME --port $DB_PORT --username $DB_USERNAME --password $DB_PASSWORD --authenticationDatabase admin  --db $DB_NAMES --archive=$BACKUP_FILE --gzip
+		log_info "Backup dir : $BACKUP_FILE "
+		log_info "Uploading on s3..."
+		upload_to_s3 $BACKUP_FILE
+               ;;
+            snowflake)
+                log_error "Snowflake backup not implemented"
+                ;;
+            postgrase)
+                BACKUP_FILE="/${BACKUP_DIR}/${DB_NAMES}_${CURRENT_DATE}.sql.gz"
+                PGPASSWORD=$DB_PASSWORD pg_dump -h $DB_HOSTNAME -p $DB_PORT -U $DB_USERNAME $DB_NAMES | gzip > $BACKUP_FILE
+                ;;
+            hive)
+                log_error "Hive backup not implemented"
+                ;;
+            apache-Iceberg)
+                log_error "Apache Iceberg backup not implemented"
+                ;;
+            presto)
+                log_error "Presto backup not implemented"
+                ;;
+            neo4j)
+                BACKUP_FILE="/${BACKUP_DIR}/${DB_NAMES}_${CURRENT_DATE}.dump"
+                neo4j-admin dump --database=$DB_NAMES --to=$BACKUP_FILE
+                ;;
+            *)
+                log_error "Unsupported database type: $DB_TYPE"
+                exit 1
+                ;;
+        esac
+
+        if [ -f "/$BACKUP_FILE" ]; then
+            log_info "Database backup successful: $BACKUP_FILE"
+        else
+            log_error "Database backup failed"
+            exit 1
+        fi
+    fi
+}
+
+# Application framework backup function
+backup_app_framework() {
+    APP_BACKUP_FILE="/${BACKUP_DIR}/app_${CURRENT_DATE}.tar.gz"
+    tar -czvf $APP_BACKUP_FILE /app/framework
+    if [ -f "$APP_BACKUP_FILE" ]; then
+        log_info "App folder backup successful: $APP_BACKUP_FILE"
+	upload_to_s3 $APP_BACKUP_FILE
+    else
+        log_error "App folder backup failed"
+        exit 1
+    fi
+}
+
+# Function to check if S3 bucket exists
+check_s3_bucket() {
+    if aws s3 ls "s3://$S3_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+        log_info "S3 bucket '$S3_BUCKET' does not exist"
+        exit 1
+    else
+        log_error "S3 bucket '$S3_BUCKET' exists"
+	exit 1
+    fi
+}
+
+
+# Upload to S3
+upload_to_s3() {
+ local BACKUP_FILES=$1
+   log_info  "Backup dir: $BACKUP_FILES"
+    aws s3 cp $BACKUP_FILES s3://$S3_BUCKET/$BACKUP_DIR/$DB_HOSTNAME/
+    if [ $? -eq 0 ]; then
+        log_info "Upload to S3 successful: $1"
+    else
+        log_error "Upload to S3 failed: $1"
+        exit 1
+    fi
+}
+
+# Remove old backups from S3
+remove_old_backups() {
+    # Calculate the target date (2 days ago)
+    TARGET_DATE=$(date -d "-$RETENTION_DAYS days" +"%Y-%m-%d")
+    log_info "Target date for deletion: $TARGET_DATE"
+
+    # List objects in the S3 bucket recursively and filter out directories
+    aws s3 ls s3://$S3_BUCKET/$BACKUP_DIR/$DB_HOSTNAME/ --recursive > s3_list.txt
+    if [ $? -ne 0 ]; then
+        log_error "Failed to list objects in S3 bucket"
+        return 1
+    fi
+
+    while read -r line; do
+        # Extract the filename
+        FILE_NAME=$(echo $line | awk '{print $4}')
+        log_info "Processing line: $line"
+	FILE_NAME=$(basename $FILE_NAME)
+        # Check if the file name is not empty (i.e., it's a file, not a directory)
+        if [ ! -z "$FILE_NAME" ]; then
+            # Extract the creation date (in YYYY-MM-DD format)
+            CREATE_DATE=$(echo $line | awk '{print $1}')
+            log_info "File name: $FILE_NAME with creation date: $CREATE_DATE"
+
+            # Check if the creation date matches the target date
+            if [ "$CREATE_DATE" == "$TARGET_DATE" ]; then
+                # Log the attempt to delete the file
+                log_info "Attempting to delete file: $FILE_NAME"
+                # Uncomment the line below to actually delete the files
+                 aws s3 rm s3://$S3_BUCKET/backup/$DB_HOSTNAME/$FILE_NAME
+                if [ $? -eq 0 ]; then
+                    log_info "Deleted $FILE_NAME from S3 bucket"
+                else
+                    log_error "Failed to delete $FILE_NAME from S3 bucket"
+                fi
+            else
+		log_info "File $FILE_NAME is not older than $RETENTION_DAYS days, skipping."
+	    fi
+        fi
+    done < s3_list.txt
+
+    # Clean up
+    rm -f s3_list.txt
+    upload_to_s3 "backup.log"
+}
+
+# Main script execution
+backup_database
+backup_app_framework
+remove_old_backups
+    if [ $? -eq 0 ]; then
+        log_info "Backup script completed successfully"
+    else
+        log_error "Failed to execute script: $1"
+        exit 1
+    fi
+
