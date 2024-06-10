@@ -1,0 +1,589 @@
+
+
+chnage now 7.12 
+pipeline {
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        choice(name: "BUILD_TYPE", choices: ["TEST" ,"FINAL"]) 
+        string(name: "VERSION", defaultValue: '5.3.0', description: 'Enter project version?')
+        string(name: "BRANCH", defaultValue: 'master', description: 'Enter git branch')
+        string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+        
+        choice(name: "SERVER_NAME", choices: ["docker", "dev", "test", "trial", "demo", "prod", "uat", "uat2", "pre-prod"])
+        string(name: "LICENSE_TO", defaultValue: 'INFERYX INC', description: 'Enter LICENSE_TO')
+        string(name: "LICENSE_EDITION", defaultValue: 'ADVANCED', description: 'Enter LICENSE_EDITION')
+        string(name: "LICENSE_TYPE", defaultValue: 'PERPETUAL', description: 'Enter LICENSE_TYPE')
+        string(name: "LICENSE_USERS", defaultValue: '30', description: 'Enter LICENSE_USERS')
+        string(name: "LICENSE_VERSION", defaultValue: '5.0', description: 'Enter LICENSE_VERSION')
+        choice(name: 'END_DATE', choices: ['30', '60', '90'], description: '')
+        string(name: "LICENSE_GRACE_PERIOD", defaultValue: '14', description: 'Enter LICENSE_GRACE_PERIOD')
+        string(name: "MAC_ADDRESS", defaultValue: '02:92:0b:42:f1:44', description: 'Enter MAC_ADDRESS')
+        choice(name: "LICENSE_VALIDATE", choices: ["IGNORE", "STRICT"])
+        string(name: "PROJECT_NAME", defaultValue: 'inferyx-platform-final-v5.2.3.5', description: 'Enter file name')
+        choice(name: "TOMCAT_PORT", choices: ["8080", "8081", "8082", "8083", "8084", "8085"])
+        choice(name: "MONGODB_PORT", choices: ["27017", "27018", "27019", "27020", "27021", "27022"])
+        choice(name: "MYSQL_PORT", choices: ["3306", "3307", "3308", "3309", "3310", "3311"])
+        choice(name: "NEO4J_PORT", choices: ["7474", "7475", "7476", "7477", "7478", "7479"])
+        choice(name: "CAMUNDA_PORT", choices: ["9090", "9091", "9092", "9093", "9094", "9096"])
+        //Pipeline_runner
+        string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        string(name: "HOST", defaultValue: 'localhost', description: 'Host name or IP address')
+        string(name: "PROTOCOL", defaultValue: 'http', description: 'Protocol (http or https)')
+        string(name: "META1_CSV", defaultValue: '/install/framework/bin/meta1.csv', description: 'Path to meta1.csv file')
+        string(name: "REPORT_FILE", defaultValue: '/install/framework/bin/pipeline1_report.txt', description: 'Path to report file')
+    }
+    environment {
+        BUILD_TYPE = params.BUILD_TYPE.toLowerCase()
+        BRANCH = params.BRANCH.toLowerCase()
+    }
+    stages {
+        stage('Platform Build') {
+            steps {
+                build job: 'Platform_Build', parameters: [
+                    string(name: 'BUILD_TYPE', value: "${params.BUILD_TYPE}"),
+                    string(name: 'VERSION', value: "${params.VERSION}"),
+                    string(name: 'BRANCH', value: "${params.BRANCH}"),
+                    string(name: 'CLIENTNAME', value: "${params.CLIENTNAME}")
+                ]
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    def dockerBuildResult = build job: 'Docker_Build', parameters: [
+                        string(name: 'BRANCH', value: "${params.BRANCH}"),
+                        string(name: 'VERSION', value: "${params.VERSION}"),
+                        string(name: 'BUILD_TYPE', value: "${params.BUILD_TYPE}"),
+                        string(name: 'CLIENT', value: "${params.CLIENTNAME}"),
+                        string(name: 'SERVER_NAME', value: "${params.SERVER_NAME}"),
+                        string(name: 'LICENSE_TO', value: "${params.LICENSE_TO}"),
+                        string(name: 'LICENSE_EDITION', value: "${params.LICENSE_EDITION}"),
+                        string(name: 'LICENSE_TYPE', value: "${params.LICENSE_TYPE}"),
+                        string(name: 'LICENSE_USERS', value: "${params.LICENSE_USERS}"),
+                        string(name: 'LICENSE_VERSION', value: "${params.LICENSE_VERSION}"),
+                        string(name: 'END_DATE', value: "${params.END_DATE}"),
+                        string(name: 'LICENSE_GRACE_PERIOD', value: "${params.LICENSE_GRACE_PERIOD}"),
+                        string(name: 'MAC_ADDRESS', value: "${params.MAC_ADDRESS}"),
+                        string(name: 'LICENSE_VALIDATE', value: "${params.LICENSE_VALIDATE}"),
+                        string(name: 'PROJECT_NAME', value: "${params.PROJECT_NAME}"),
+                        string(name: 'TOMCAT_PORT', value: "${params.TOMCAT_PORT}"),
+                        string(name: 'MONGODB_PORT', value: "${params.MONGODB_PORT}"),
+                        string(name: 'MYSQL_PORT', value: "${params.MYSQL_PORT}"),
+                        string(name: 'NEO4J_PORT', value: "${params.NEO4J_PORT}"),
+                        string(name: 'CAMUNDA_PORT', value: "${params.CAMUNDA_PORT}")
+                    ]
+                    def tomcatPort = dockerBuildResult.getBuildVariables().get('TOMCAT_PORT')
+                    build job: 'Pipeline_Runner', parameters: [
+                        string(name: 'EMAIL', value: "${params.EMAIL}"),
+                        string(name: 'HOST', value: "${params.HOST}"),
+                        string(name: 'PROTOCOL', value: "${params.PROTOCOL}"),
+                        string(name: 'META1_CSV', value: "${params.META1_CSV}"),
+                        string(name: 'REPORT_FILE', value: "${params.REPORT_FILE}"),
+                        string(name: 'TOMCAT_PORT', value: "${tomcatPort}")
+                    ]
+                }
+            }
+        }
+    }
+}
+
+
+
+
+================================================================================================
+pipeline {
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        string(name: "BRANCH", defaultValue: '', description: 'Enter git branch name')
+        string(name: "VERSION", defaultValue: '', description: 'Enter rel version')
+        choice(name: "BUILD_TYPE", choices: ["FINAL", "TEST"])
+        choice(name: "CLIENT", choices: ["inferyx", "gt", "sb", "us", "indo", "sony", "arka", "neo4j"])
+        choice(name: "SERVER_NAME", choices: ["docker", "dev", "test", "trial", "demo", "prod", "uat", "uat2", "pre-prod"])
+        string(name: "LICENSE_TO", defaultValue: 'INFERYX INC', description: 'Enter LICENSE_TO')
+        string(name: "LICENSE_EDITION", defaultValue: 'ADVANCED', description: 'Enter LICENSE_EDITION')
+        string(name: "LICENSE_TYPE", defaultValue: 'PERPETUAL', description: 'Enter LICENSE_TYPE')
+        string(name: "LICENSE_USERS", defaultValue: '30', description: 'Enter LICENSE_USERS')
+        string(name: "LICENSE_VERSION", defaultValue: '5.0', description: 'Enter LICENSE_VERSION')
+        choice(name: 'END_DATE', choices: ['30', '60', '90'], description: '')
+        string(name: "LICENSE_GRACE_PERIOD", defaultValue: '14', description: 'Enter LICENSE_GRACE_PERIOD')
+        string(name: "MAC_ADDRESS", defaultValue: '02:92:0b:42:f1:44', description: 'Enter MAC_ADDRESS')
+        choice(name: "LICENSE_VALIDATE", choices: ["IGNORE", "STRICT"])
+        string(name: "PROJECT_NAME", defaultValue: 'inferyx-platform-final-v5.2.3.5', description: 'Enter file name')
+        choice(name: "TOMCAT_PORT", choices: ["8080", "8081", "8082", "8083", "8084", "8085"])
+        choice(name: "MONGODB_PORT", choices: ["27017", "27018", "27019", "27020", "27021", "27022"])
+        choice(name: "MYSQL_PORT", choices: ["3306", "3307", "3308", "3309", "3310", "3311"])
+        choice(name: "NEO4J_PORT", choices: ["7474", "7475", "7476", "7477", "7478", "7479"])
+        choice(name: "CAMUNDA_PORT", choices: ["9090", "9091", "9092", "9093", "9094", "9096"])
+        string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        string(name: "HOST", defaultValue: 'localhost', description: 'Host name or IP address')
+        string(name: "PORT", defaultValue: '8080', description: 'Port number')
+        string(name: "PROTOCOL", defaultValue: 'http', description: 'Protocol (http or https)')
+        string(name: "META1_CSV", defaultValue: '/install/framework/bin/meta1.csv', description: 'Path to meta1.csv file')
+        string(name: "REPORT_FILE", defaultValue: '/install/framework/bin/pipeline1_report.txt', description: 'Path to report file')
+    }
+    environment {
+        BUILD_TYPE = params.BUILD_TYPE.toLowerCase()
+        BRANCH = params.BRANCH.toLowerCase()
+    }
+    stages {
+        stage('Platform Build') {
+            steps {
+                build job: 'Platform_Build', parameters: [
+                    string(name: 'BUILD_TYPE', value: "${params.BUILD_TYPE}"),
+                    string(name: 'VERSION', value: "${params.VERSION}"),
+                    string(name: 'BRANCH', value: "${params.BRANCH}"),
+                    string(name: 'CLIENTNAME', value: "${params.CLIENTNAME}")
+                ]
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                build job: 'Docker_Build', parameters: [
+                    string(name: 'BRANCH', value: "${params.BRANCH}"),
+                    string(name: 'VERSION', value: "${params.VERSION}"),
+                    string(name: 'BUILD_TYPE', value: "${params.BUILD_TYPE}"),
+                    string(name: 'CLIENT', value: "${params.CLIENTNAME}"),
+                    string(name: 'SERVER_NAME', value: "${params.SERVER_NAME}"),
+                    string(name: 'LICENSE_TO', value: "${params.LICENSE_TO}"),
+                    string(name: 'LICENSE_EDITION', value: "${params.LICENSE_EDITION}"),
+                    string(name: 'LICENSE_TYPE', value: "${params.LICENSE_TYPE}"),
+                    string(name: 'LICENSE_USERS', value: "${params.LICENSE_USERS}"),
+                    string(name: 'LICENSE_VERSION', value: "${params.LICENSE_VERSION}"),
+                    string(name: 'END_DATE', value: "${params.END_DATE}"),
+                    string(name: 'LICENSE_GRACE_PERIOD', value: "${params.LICENSE_GRACE_PERIOD}"),
+                    string(name: 'MAC_ADDRESS', value: "${params.MAC_ADDRESS}"),
+                    string(name: 'LICENSE_VALIDATE', value: "${params.LICENSE_VALIDATE}"),
+                    string(name: 'PROJECT_NAME', value: "${params.PROJECT_NAME}"),
+                    string(name: 'TOMCAT_PORT', value: "${params.TOMCAT_PORT}"),
+                    string(name: 'MONGODB_PORT', value: "${params.MONGODB_PORT}"),
+                    string(name: 'MYSQL_PORT', value: "${params.MYSQL_PORT}"),
+                    string(name: 'NEO4J_PORT', value: "${params.NEO4J_PORT}"),
+                    string(name: 'CAMUNDA_PORT', value: "${params.CAMUNDA_PORT}")
+                ]
+            }
+        }
+        stage('Pipeline Runner') {
+            steps {
+                build job: 'Pipeline_Runner', parameters: [
+                    string(name: 'EMAIL', value: "${params.EMAIL}"),
+                    string(name: 'HOST', value: "${params.HOST}"),
+                    //string(name: 'PORT', value: "${params.PORT}"),
+                    string(name: 'PROTOCOL', value: "${params.PROTOCOL}"),
+                    string(name: 'META1_CSV', value: "${params.META1_CSV}"),
+                    string(name: 'REPORT_FILE', value: "${params.REPORT_FILE}")
+                ]
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=============================================================================================================
+1 pipline - Platform_Build 
+pipeline {    
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        choice(name: "BUILD_TYPE", choices: ["TEST" ,"FINAL"]) 
+        string(name: "VERSION", defaultValue: '5.3.0', description: 'Enter project version?')
+        string(name: "BRANCH", defaultValue: 'master', description: 'Enter git branch')
+        string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+    }
+	environment {
+               	BUILD_TYPE=params.BUILD_TYPE.toLowerCase()
+            }    
+  stages { 
+   
+    stage('Start Build') {
+      steps {
+
+        sh '''
+             sudo -u inferyx /install/build-framework.sh -t ${BUILD_TYPE} -v ${VERSION} -b ${BRANCH} -c ${CLIENTNAME}
+
+          '''
+      }
+    }
+    
+    stage('Sending build completed notification') {
+      steps {
+        script {
+                emailext(attachLog: false, 
+		compressLog: false,
+		mimeType: 'text/html',
+		replyTo: '',             
+		from: 'dev-installer@inferyx.com', 
+		to: 'alerts@inferyx.com',
+		subject: "${CLIENTNAME} : Build completed v${VERSION} for v${CLIENTNAME} ",
+                body: """
+		        <!DOCTYPE html>
+			<html>
+			<head>
+				<style>
+					table {
+					  font-family: arial, sans-serif;
+					  border-collapse: collapse;
+					  width: 100%;
+					}
+
+					td, th {
+					  border: 1px solid #dddddd;
+					  text-align: left;
+					  padding: 8px;
+					}
+
+					tr:nth-child(even) {
+					  background-color: #dddddd;
+					}
+					h2{
+						text-align: center;
+						background-color: green;
+						}
+				</style>
+			</head>
+				<body>
+
+				<h2>Log Details</h2>
+
+				<table>
+				  <tr>
+				    <th>VERSION NUMBER</th>
+				    <th>BRANCH NAME</th>
+				    <th>CLIENT NAME</th>
+				  </tr>
+				  <tr>
+				    <td>${env.VERSION}</td>
+				    <td>${env.BRANCH}</td>
+				    <td>${env.CLIENTNAME}</td>
+				  </tr>
+				</table>
+
+				</body>
+			</html>
+
+                """                
+		)
+            
+            }
+      }
+
+        }
+      }
+    }
+
+
+
+2 pipeline - Docker_Build 
+def isPortInUse(port) {
+    if (port == 3306) {
+        return sh(script: "netstat -tuln | grep $port", returnStatus: true) == 0
+    } else {
+        return sh(script: "lsof -Pi :${port} -sTCP:LISTEN -t", returnStatus: true) == 0
+    }
+    
+}
+
+def findAvailablePort(usedPorts, basePort) {
+    def port = basePort
+    while (usedPorts.containsKey(port) || isPortInUse(port)) {
+        port++
+    }
+    usedPorts[port] = true
+    return port
+}
+
+def assignAvailablePort(serviceName, usedPorts, defaultPort) {
+    def basePort = defaultPort.toInteger()
+    def port = findAvailablePort(usedPorts, basePort)
+    echo "Assigned port for $serviceName: $port"
+    return port
+}
+
+
+
+
+pipeline {
+   agent {
+        label params.AGENT == "DEV" ? "" : params.AGENT 
+    }
+   parameters {
+     string(name:"BRANCH", defaultValue: '', description: 'Enter git branch name')   
+    string(name:"VERSION", defaultValue: '', description: 'Enter rel version')
+    choice(name: "BUILD_TYPE", choices: ["FINAL","TEST"]) 
+    choice(name: "CLIENT", choices: ["inferyx","gt","sb","us","indo","sony","arka","neo4j"]) 
+    choice(name: "SERVER_NAME", choices: ["docker","dev","test","trial","demo","prod","uat","uat2","pre-prod"])
+    string(name:"LICENSE_TO", defaultValue: 'INFERYX INC', description: 'Enter LICENSE_TO')
+    string(name:"LICENSE_EDITION", defaultValue: 'ADVANCED', description: 'Enter  LICENSE_EDITION')
+    string(name:"LICENSE_TYPE", defaultValue: 'PERPETUAL', description: 'Enter LICENSE_TYPE')
+    string(name:"LICENSE_USERS", defaultValue: '30', description: 'Enter LICENSE_USERS')
+    string(name:"LICENSE_VERSION", defaultValue: '5.0', description: 'Enter LICENSE_VERSION')  
+    choice (name:'END_DATE' ,choices: ['30', '60','90' ], description: '') 
+    string(name:"LICENSE_GRACE_PERIOD", defaultValue: '14', description: 'Enter LICENSE_GRACE_PERIOD')
+    string(name:"MAC_ADDRESS", defaultValue: '02:92:0b:42:f1:44', description: 'Enter MAC_ADDRESS')
+    choice(name: "LICENSE_VALIDATE", choices: ["IGNORE","STRICT"])
+    string(name: "PROJECT_NAME", defaultValue: 'inferyx-platform-final-v5.2.3.5', description: 'Enter file name')
+    choice(name: "TOMCAT_PORT", choices: ["8080","8081","8082","8083","8084","8085"]) 
+    choice(name: "MONGODB_PORT", choices: ["27017","27018","27019","27020","27021","27022"]) 
+    choice(name: "MYSQL_PORT", choices: ["3306","3307","3308","3309","3310","3311"]) 
+    choice(name: "NEO4J_PORT", choices: ["7474","7475","7476","7477","7478","7479"]) 
+    choice(name: "CAMUNDA_PORT", choices: ["9090","9091","9092","9093","9094","9096"]) 
+    }
+        environment {
+        TOMCAT = null
+        CAMUNDA = null
+        NEO4J = null
+        MYSQL = null
+        MONGODB = null
+        BUILD_TYPE=params.BUILD_TYPE.toLowerCase()
+        BRANCH=params.BRANCH.toLowerCase()
+
+        GIT_HOME="/home/inferyx/git"
+        GIT_URL="https://ginferyx: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@github.com/inferyx/platform.git"
+        GIT_URL2="https://ginferyx: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@github.com/inferyx/platform-license.git"
+        } 
+    stages {    
+    stage('Pulling latest code from git') {
+      steps {
+        sh '''
+        cd ${GIT_HOME}/inferyx/platform/
+		git stash	 	
+		git checkout ${BRANCH}
+		git pull ${GIT_URL} 
+          '''
+      }
+    }
+   
+    stage('Pulling latest from license repo') {
+          steps {
+            sh '''           
+             cd ${GIT_HOME}/inferyx/platform-license/
+             git pull ${GIT_URL2} main
+              '''
+          }
+        }
+      stage('Creating license file') {
+	steps { 
+	
+	sh '''
+	 mkdir -p /install/framework/build/$VERSION
+	 mkdir -p /home/inferyx/git/inferyx/platform-license/license/$CLIENT/$SERVER_NAME
+	 #cp -a -R /install/framework/build/default/. /install/framework/build/$VERSION/
+	 cp -a -R /devops/default/. /install/framework/build/$VERSION/
+	  LICENSE_ISSUE_DATE=$(date +%F)
+	  LICENSE_START_DATE=$(date +%F)
+	  LICENSE_END_DATE=$(date -d "+${END_DATE} days" +%F)
+	  
+    cd ${GIT_HOME}/inferyx/platform/framework-web/deploy/bin/
+    ./create_licence.sh "LICENSE_FROM=INFERYX INC" "LICENSE TO=${LICENSE_TO}" LICENSE_EDITION=${LICENSE_EDITION} LICENSE_TYPE=${LICENSE_TYPE} LICENSE_USERS=${LICENSE_USERS} LICENSE_VERSION=${LICENSE_VERSION} LICENSE_ISSUE_DATE=${LICENSE_ISSUE_DATE} LICENSE_START_DATE=${LICENSE_ISSUE_DATE} LICENSE_END_DATE=${LICENSE_END_DATE} LICENSE_GRACE_PERIOD=${LICENSE_GRACE_PERIOD} MAC_ADDRESS=${MAC_ADDRESS} LICENSE_VALIDATE=${LICENSE_VALIDATE}
+  
+        mv /home/inferyx/git/inferyx/platform-license/license/license.txt ${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/
+	cd ${GIT_HOME}/inferyx/platform-license/bin
+   ./license3j.sh encode --license-file=${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/license.txt --keyring-file=${GIT_HOME}/inferyx/platform-license/bin/secring.gpg --key=InferyxInc --password=20Inferyx!9 --output=${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/${SERVER_NAME}/license.bin
+     cd /install/framework/build/
+     cp -R  ${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/license.txt /install/framework/build/$VERSION/
+     cp -R  ${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/${SERVER_NAME}/license.bin /install/framework/build/$VERSION/
+     cp -R  ${GIT_HOME}/inferyx/platform-license/bin/pubring.gpg /install/framework/build/$VERSION/
+     cp -R  ${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/license.txt ${GIT_HOME}/inferyx/platform-license/license/${CLIENT}/${SERVER_NAME}/
+	'''	 
+	}
+	} 
+stage('Creating Docker images') {
+    steps {
+        script {
+            echo "Project name: ${PROJECT_NAME}"
+            def USED_PORTS = [:] 
+            def remoteFile = "/install/framework/build/${PROJECT_NAME}.tar.gz"
+            def localDir = "/install/framework/build/${VERSION}"
+            def cpExitCode = sh(returnStatus: true, script: "cp ${remoteFile} ${localDir}")
+            if (cpExitCode == 0) {
+                echo "File copied successfully."
+            } else {
+                echo "Error copying the file."
+                echo "Trying SCP..."
+               sh " curl -u infer:'20Access!9' -O -k https://dev.inferyx.com/download/${PROJECT_NAME}.tar.gz"
+              // sh " curl -u infer:'20Access!9' -o /install/framework/build/${PROJECT_NAME}.tar.gz http://13.232.26.161:90/download/build/${PROJECT_NAME}.tar.gz"
+                //sh "curl -u infer:'20Access!9' -O http://13.232.26.161:90/download/build/${PROJECT_NAME}.tar.gz"
+                //sh "sshpass -p '20Inferyx!9' scp inferyx@dev.inferyx.com:${remoteFile} ${localDir}"
+               //sh"cp ${remoteFile} ${localDir}""
+               
+            }
+            
+               //sh 'image_id=$(docker images --format "{{.ID}}" $PROJECT_NAME:latest | head -n 1);'
+                    TOMCAT = assignAvailablePort("tomcat", USED_PORTS, TOMCAT_PORT)
+                    CAMUNDA = assignAvailablePort("camunda", USED_PORTS, CAMUNDA_PORT)
+                    NEO4J = assignAvailablePort("neo4j", USED_PORTS, NEO4J_PORT)
+                    MYSQL = assignAvailablePort("mysql", USED_PORTS, MYSQL_PORT)
+                    MONGODB = assignAvailablePort("mongodb", USED_PORTS, MONGODB_PORT)
+                    echo "Assigned ports: TOMCAT=$TOMCAT, CAMUNDA=$CAMUNDA, NEO4J=$NEO4J, MYSQL=$MYSQL, MONGODB=$MONGODB"
+                      def content = """
+                                TOMCATPORT=${TOMCAT}
+                                CAMUNDAPORT=${CAMUNDA}
+                                NEO4JPORT=${NEO4J}
+                                MYSQLPORT=${MYSQL}
+                                MONGODBPORT=${MONGODB}
+                            """
+                          writeFile file: '/install/framework/build/port_info.txt', text: content
+
+            // Assign available ports
+                // TOMCAT = assignAvailablePort("tomcat", TOMCAT_PORT)
+                // CAMUNDA = assignAvailablePort("camunda", CAMUNDA_PORT)
+                // NEO4J = assignAvailablePort("neo4j", NEO4J_PORT)
+                // MYSQL = assignAvailablePort("mysql", MYSQL_PORT)
+                // MONGODB = assignAvailablePort("mongodb", MONGODB_PORT)
+        //   sh "echo Assigned ports: TOMCAT=$TOMCAT, CAMUNDA=$CAMUNDA, NEO4J=$NEO4J, MYSQL=$MYSQL, MONGODB=$MONGODB"
+           
+        //     sh '''
+        //     image_id=$(docker images --format "{{.ID}}"  inferyx-platform-final-v5.6.6:latest | head -n 1)
+        //     echo $image_id
+        //     docker run -it  -p $TOMCAT:8080 -p $MONGODB:27017 -p $MYSQL:3306 -p $CAMUNDA:9090 -p $NEO4J:7474 -d $image_id
+            
+        //     '''
+
+           // sh "declare -A services=( [\"tomcat\"]=${TOMCAT_PORT} [\"camunda\"]=${CAMUNDA_PORT} [\"neo4j\"]=${NEO4J_PORT} [\"mysql\"]=${MYSQL_PORT} [\"mongodb\"]=${MONGODB_PORT} ); for service in \"\${!services[@]}\"; do port=\${services[\$service]}; while lsof -Pi :\$port -sTCP:LISTEN -t >/dev/null; do ((port++)); done; case \$service in \"tomcat\") TOMCAT_PORT=\$port;; \"camunda\") CAMUNDA_PORT=\$port;; \"neo4j\") NEO4J_PORT=\$port;; \"mysql\") MYSQL_PORT=\$port;; \"mongodb\") MONGODB_PORT=\$port;; *) echo \"Unknown service: \$service\"; exit 1;; esac; echo \"The available port for \$service is: \$port\"; done; image_id=\$(docker images --format \"{{.ID}}\" \$PROJECT_NAME:latest | head -n 1); echo \$image_id; docker run -it -p \${TOMCAT_PORT}:8080 -p \${MONGODB_PORT}:27017 -p \${MYSQL_PORT}:3306 -p \${CAMUNDA_PORT}:9090 -p \${NEO4J_PORT}:7474 -d \$image_id"
+        }
+    }
+}
+        stage('Run Docker Image and create container') {
+            steps {
+                script {
+               def localDir = "/install/framework/build/${VERSION}"
+                 def fileExists = fileExists("${localDir}/${PROJECT_NAME}.tar.gz")
+                if (!fileExists) {
+                    echo "SCP failed. Exiting..."
+                    currentBuild.result = 'FAILURE'
+                    return
+                }
+                    sh "cd ${localDir} && docker build -t ${PROJECT_NAME} --build-arg PROJECT=${PROJECT_NAME} ."
+                    IMAGEID = sh(script: 'docker images --format "{{.ID}}" $PROJECT_NAME:latest | head -n 1', returnStdout: true).trim()
+                    echo "IMG: $IMAGEID"
+                    sh "docker run -it -p $TOMCAT:8080 -p $MONGODB:27017 -p $MYSQL:3306 -p $CAMUNDA:9090 -p $NEO4J:7474 -d $IMAGEID"
+                }
+            }
+        }
+    }
+}
+
+3 pipeline ---Pipeline_Runner
+pipeline {
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        //string(name: "IPDOMAIN", defaultValue: 'http://test.inferyx.com', description: 'Enter IP or domain main')
+        string(name: "HOST", defaultValue: 'localhost', description: 'Host name or IP address')
+        string(name: "PORT", defaultValue: '8080', description: 'Port number')
+        string(name: "PROTOCOL", defaultValue: 'http', description: 'Protocol (http or https)')
+        string(name: "META1_CSV", defaultValue: '/install/framework/bin/meta1.csv', description: 'Path to meta1.csv file')
+        string(name: "REPORT_FILE", defaultValue: '/install/framework/bin/pipeline1_report.txt', description: 'Path to report file')
+    }
+  
+stages {
+stage('Calling API') {
+    steps {
+        script {
+            //echo "already done"
+            //sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+             sh "/install/framework/bin/pipeline_runner.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+            //  if (env.TOKEN == '') {
+            //      sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -e ${EMAIL}" 
+            //  } else {
+            //      sh "/install/framework/bin/response2.sh -i ${env.IPDOMAIN} -t ${env.TOKEN} -e ${EMAIL}"
+            //  }
+        }
+    }
+}
+    stage('Sending build completed notification') {
+      steps {
+        script {
+                emailext(attachLog: false, 
+		compressLog: false,
+		mimeType: 'text/html',
+		replyTo: '',             
+		from: 'dev-installer@inferyx.com', 
+		to: '${EMAIL}',
+		subject: "Pipeline Status",
+                body: """
+		        <!DOCTYPE html>
+			<html>
+			<head>
+				<style>
+					table {
+					  font-family: arial, sans-serif;
+					  border-collapse: collapse;
+					  width: 100%;
+					}
+
+					td, th {
+					  border: 1px solid #dddddd;
+					  text-align: left;
+					  padding: 8px;
+					}
+
+					tr:nth-child(even) {
+					  background-color: #dddddd;
+					}
+					h2{
+						text-align: center;
+						background-color: green;
+						}
+				</style>
+			</head>
+				<body>
+
+				<h2>Pipeline Testing Report</h2>
+                
+				<table>
+				  <tr>
+				    <th>IPDOMAIN</th>
+				    <th>Senderr</th>
+				  </tr>
+				  <tr>
+				     <td>${IPDOMAIN}</td>
+				    <td>Report sending by API</td>
+				  </tr>
+				</tabl
+
+				</body>
+			</html>
+
+                """                
+		)
+            
+            }
+      }
+
+    }
+}
+}
+
+

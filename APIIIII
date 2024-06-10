@@ -1,0 +1,72 @@
+https://test.inferyx.com/framework/dag/execute?uuid=4c2252fc-ff2b-4424-b658-8615efcb01f9&version=1677142787095
+
+
+
+
+
+https://192.168.1.107:8080/framework/dag/execute?uuid=c26f6f2f-dfd6-4279-89f0-dae2debb0333&version=1564627324
+
+
+
+
+https://192.168.1.107:8080/framework/dag/execute?uuid=c26f6f2f-dfd6-4279-89f0-dae2debb0333&version=1564627324
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://192.168.1.107:8080/framework/dag/execute?uuid=c26f6f2f-dfd6-4279-89f0-dae2debb0333&version=1564627324&action=execute&isDebug=false    ---------POST
+
+
+
+
+http://192.168.1.107:8080/framework/metadata/getBaseEntityStatusByCriteria?action=view&type=dagexec&name=&userName=&startDate=&endDate=&tags=&active=Y&published=&status=&moduleType=&limit=500
+
+
+
+                STATUS_RESULT=$(curl --location "http://192.168.1.141:8080/framework/dag/getStatusByDagExec?action=view&DagExecUuid=$NEW_UUID&token=$Token" \
+                    --header "Authorization: Bearer $Token" \
+                    --header "Cookie: JSESSIONID=844A6ADFF82D903DA11061051EE52207")
+
+
+
+
+
+http://192.168.1.107:8080/framework/dag/getStatusByDagExec?action=view&DagExecUuid=4203924a-d91f-44bb-9b42-5f032ced0fe5
+====================================
+
+
+nisha LOCAL API 
+
+
+
+curl --location 'http://192.168.1.107:8080/framework/dag/getStatusByDagExec?action=view&DagExecUuid=4203924a-d91f-44bb-9b42-5f032ced0fe5&token=yxClZ1vk8TbfBYyPzL5wJbTl4Bdnzqh7KYBBLCl2' \
+--header 'Cookie: JSESSIONID=B20F64452F4C2628785E5DF927D00DD9'
+
+
+
+
+
+
+
+
+

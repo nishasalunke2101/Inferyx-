@@ -1,0 +1,62 @@
+    parameters {
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        //string(name: "IPDOMAIN", defaultValue: 'http://test.inferyx.com', description: 'Enter IP or domain main')
+        string(name: "HOST", defaultValue: 'localhost', description: 'Host name or IP address')
+        string(name: "PORT", defaultValue: '8080', description: 'Port number')
+        string(name: "PROTOCOL", defaultValue: 'http', description: 'Protocol (http or https)')
+        string(name: "META1_CSV", defaultValue: '/install/framework/bin/meta1.csv', description: 'Path to meta1.csv file')
+        string(name: "REPORT_FILE", defaultValue: '/install/framework/bin/pipeline1_report.txt', description: 'Path to report file')
+        
+        
+        
+        
+            string(name:"BRANCH", defaultValue: '', description: 'Enter git branch name')   
+    string(name:"VERSION", defaultValue: '', description: 'Enter rel version')
+    choice(name: "BUILD_TYPE", choices: ["FINAL","TEST"]) 
+    choice(name: "CLIENT", choices: ["inferyx","gt","sb","us","indo","sony","arka","neo4j"]) 
+    choice(name: "SERVER_NAME", choices: ["docker","dev","test","trial","demo","prod","uat","uat2","pre-prod"])
+    string(name:"LICENSE_TO", defaultValue: 'INFERYX INC', description: 'Enter LICENSE_TO')
+    string(name:"LICENSE_EDITION", defaultValue: 'ADVANCED', description: 'Enter  LICENSE_EDITION')
+    string(name:"LICENSE_TYPE", defaultValue: 'PERPETUAL', description: 'Enter LICENSE_TYPE')
+    string(name:"LICENSE_USERS", defaultValue: '30', description: 'Enter LICENSE_USERS')
+    string(name:"LICENSE_VERSION", defaultValue: '5.0', description: 'Enter LICENSE_VERSION')  
+    choice (name:'END_DATE' ,choices: ['30', '60','90' ], description: '') 
+    string(name:"LICENSE_GRACE_PERIOD", defaultValue: '14', description: 'Enter LICENSE_GRACE_PERIOD')
+    string(name:"MAC_ADDRESS", defaultValue: '02:92:0b:42:f1:44', description: 'Enter MAC_ADDRESS')
+    choice(name: "LICENSE_VALIDATE", choices: ["IGNORE","STRICT"])
+    string(name: "PROJECT_NAME", defaultValue: 'inferyx-platform-final-v5.2.3.5', description: 'Enter file name')
+    choice(name: "TOMCAT_PORT", choices: ["8080","8081","8082","8083","8084","8085"]) 
+    choice(name: "MONGODB_PORT", choices: ["27017","27018","27019","27020","27021","27022"]) 
+    choice(name: "MYSQL_PORT", choices: ["3306","3307","3308","3309","3310","3311"]) 
+    choice(name: "NEO4J_PORT", choices: ["7474","7475","7476","7477","7478","7479"]) 
+    choice(name: "CAMUNDA_PORT", choices: ["9090","9091","9092","9093","9094","9096"]) 
+        A1:AH6346
+        ============================
+
+        //Docker_Build 
+        choice(name: "SERVER_NAME", choices: ["docker", "dev", "test", "trial", "demo", "prod", "uat", "uat2", "pre-prod"])
+        string(name: "LICENSE_TO", defaultValue: 'INFERYX INC', description: 'Enter LICENSE_TO')
+        string(name: "LICENSE_EDITION", defaultValue: 'ADVANCED', description: 'Enter LICENSE_EDITION')
+        string(name: "LICENSE_TYPE", defaultValue: 'PERPETUAL', description: 'Enter LICENSE_TYPE')
+        string(name: "LICENSE_USERS", defaultValue: '30', description: 'Enter LICENSE_USERS')
+        string(name: "LICENSE_VERSION", defaultValue: '5.0', description: 'Enter LICENSE_VERSION')
+        choice(name: 'END_DATE', choices: ['30', '60', '90'], description: '')
+        string(name: "LICENSE_GRACE_PERIOD", defaultValue: '14', description: 'Enter LICENSE_GRACE_PERIOD')
+        string(name: "MAC_ADDRESS", defaultValue: '02:92:0b:42:f1:44', description: 'Enter MAC_ADDRESS')
+        choice(name: "LICENSE_VALIDATE", choices: ["IGNORE", "STRICT"])
+        string(name: "PROJECT_NAME", defaultValue: 'inferyx-platform-final-v5.2.3.5', description: 'Enter file name')
+        choice(name: "TOMCAT_PORT", choices: ["8080", "8081", "8082", "8083", "8084", "8085"])
+        choice(name: "MONGODB_PORT", choices: ["27017", "27018", "27019", "27020", "27021", "27022"])
+        choice(name: "MYSQL_PORT", choices: ["3306", "3307", "3308", "3309", "3310", "3311"])
+        choice(name: "NEO4J_PORT", choices: ["7474", "7475", "7476", "7477", "7478", "7479"])
+        choice(name: "CAMUNDA_PORT", choices: ["9090", "9091", "9092", "9093", "9094", "9096"])
+        
+        
+        
+        
+             string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+        string(name: "EMAIL", defaultValue: 'gkumar@inferyx.com', description: 'Enter email id')
+        string(name: "HOST", defaultValue: 'localhost', description: 'Host name or IP address')
+        string(name: "PROTOCOL", defaultValue: 'http', description: 'Protocol (http or https)')
+        string(name: "META1_CSV", defaultValue: '/install/framework/bin/meta1.csv', description: 'Path to meta1.csv file')
+        string(name: "REPORT_FILE", defaultValue: '/install/framework/bin/pipeline1_report.txt', description: 'Path to report file')

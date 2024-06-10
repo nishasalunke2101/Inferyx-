@@ -1,0 +1,313 @@
+change path for python 
+/opt/tomcat/webapps/framework/WEB-INF/classes
+inferyx@ip-172-26-13-27:/opt/tomcat/webapps/framework/WEB-INF/classes$ sudo nano framework.properties 
+
+framework.python.exec=/opt/platformenv/bin/python3( put this location whenever error comes )
+
+
+
+
+/app/framework/bin/patch_dev.sh -d code -B rel-6.0.1 -v 6.0.1
+
+                                    http://13.232.26.161:9095/        http://65.1.212.204:9095/  
+
+
+
+                                    Full Refresh Activity
+									
+sudo update-alternatives --config java			
+						
+Step 1 
+
+Build framework from jenkins 
+Run the pipeline with parameters   
+PIpeline name -->Platform_Build
+Pass this parameter for test/final build
+BUILD_TYPE= final or test 
+VERSION = 6.0.5
+BRANCH = rel-6.0.0
+CLIENTNAME = inferyx
+  
+step 2
+
+Now Goto the target server using ssh
+
+cd /install/framework/build/
+
+download the framework using this url
+
+curl -u infer:'20Access!9' -O -k https://dev.inferyx.com/download/inferyx-platform-test-v6.0.2.tar.gz
+
+Extract the  inferyx-platform-final-v6.0.0.tar.gz using this command
+tar -xvf inferyx-platform-test-v6.0.2.tar.gz
+
+Goto the bin folder
+cd inferyx-platform-final-v6.0.0/deploy/bin
+
+Run the deplop_framework.sh with required parameters  -->
+======================================================================================================================================================================================
+                          ./deploy_framework.sh -a all -d framework -H localhost -P 27017 -u inferyx -p 20Inferyx19 -o all
+======================================================================================================================================================================================
+
+Now Goto the /app/framework/bin/ folder
+
+Run the create_all_db.sh script for database refresh  for mysql---> 
+======================================================================================================================================================================================
+                           ./create_all_db.sh -o common,inferyx -a all -s all -u inferyx -p inferyx -d mysql
+======================================================================================================================================================================================
+ 
+for help do ( ./create_all_db.sh -h)
+ 
+ now go to  cd /backup/
+ and then check for current date and check licence file s there or not --inferyx@ip-172-31-31-155:/backup/2024-05-30_11:49/framework/license$ ls
+ 
+
+Now Copy the license file from backup in /app/framework/license/ folder
+
+cp -R  /backup/2024-05-16_14:05/framework/license/* /app/framework/license/     #cp -R  /backup/2024-05-30_11:49/framework/license/* /app/framework/license/  
+
+
+Goto the /install/framework/build/inferyx-platform-final-v6.0.0/deploy/bin
+
+Run the deploy.sh script with required parameters  -->  
+======================================================================================================================================================================================
+                          ./deploy.sh -b final -U inferyx -P 20Inferyx19 -u inferyx  -v 6.1.1
+      ======================================================================================================================================================================================                                                  
+  please deploy camund aslo -- deploy_camunda.sh                                                       
+                                                      SEE ACCORDING TO PASSWORD  ====================================================================================================================================================================================== 
+                          ./deploy.sh -b test -U inferyx -P 20Inferyx19 -u inferyx -v 6.0.2
+======================================================================================================================================================================================
+
+now check the server is up or not --> http://3.110.161.36:8080/framework/app/index.html#! cd /install/framework/build/
+
+
+
+
+*********************************************************************************************
+
+
+
+
+2024-02-22_08:14
+
+sudo update-alternatives --config java
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ ==========================================================================================================================================
+Deploy camuda command --
+ Now go in  /app/framework/bin/ 
+ ls
+ and run this commands 
+  ./deploy_camunda.sh -i localhost -p 9090 -f /install/framework/build/inferyx-platform-final-v6.0.0/deploy/app/common/sam/workflow
+  
+  
+  mongodb -running --> systemctl status mongodb
+
+  tomcat running --> needs java 8  --> systemctl status tomcat
+
+  camunda running -->  http://3.110.161.36:9090/
+  
+  neo4j running  --> it needs java 11  --> http://3.110.161.36:7474
+  
+						sudo service neo4j start
+						sudo service neo4j status
+						
+  After all this login to 
+  http://3.110.161.36/framework/app/index.html#!
+  
+  
+  =============================================================================================================================
+  
+  Then deploy snowflake 
+  
+  Snowflake Deployment...........
+
+1. Create build
+Full Refresh 
+2. deploy_framework.sh 
+3. create_all_db.sh
+4. Update license file
+license.bin  pubring.gpg
+5. Update datasource for datapod ingest and datasource cred
+6. deploy.sh
+7. deploy camunda
+8. update mongodb password  (not necessary )
+9. Import function , formula and map in aml app
+login in aml and after login in 
+goto Admin
+select migration assist
+Then click on ADD button  
+click import 
+click add button add fill the form 
+submit
+click action and execute 
+ 
+
+10. Run mongodb script for formula update
+11. Update ip for signup
+
+
+
+#Update datasource
+cd /app/framework/bin/
+#admin
+./update_datapod_ds.sh -d 917afe67-2042-4400-92b3-a9b96c66c04e -a d7c11fd7-ec1a-40c7-ba25-7da1e8b730cb -n "snowflake_framework_admin" -c ingest
+
+#aml
+ ./update_datapod_ds.sh -d fc22eac9-53a9-496f-bd61-89da0de7206c -a d7c11fd7-ec1a-40c7-ba25-7da1e8b730cz -n "snowflake_framework_aml" -c ingest
+
+#edw 
+./update_datapod_ds.sh -d 0156c583-b68a-4eb6-8f01-e80616e674d8 -a 018830a8-a30b-4614-b991-84d049c0c269 -n "snowflake_framework_edw" -c ingest
+
+#cua
+./update_datapod_ds.sh -d c1c0f873-ac44-4f3b-b6e5-0a3a59a76f42 -a dbb616f5-c259-469f-a121-7392bf408267 -n "snowflake_framework_cua" -c ingest
+
+
+#cfa
+./update_datapod_ds.sh -d 232bc2eb-1a11-4343-957c-3e3b63b5ccd7 -a 1abde585-a6f2-4282-90b0-b5b6a403cc67 -n "snowflake_framework_cfa" -c ingest
+#cra 
+./update_datapod_ds.sh -d d10829a4-855e-4bdf-a3bc-836e75468ced -a d4a9cc7e-16ea-4b0d-91a5-a0b74ef26250 -n "snowflake_framework_crf" -c ingest
+
+#ccf
+./update_datapod_ds.sh -d c814bc71-d0fc-4736-9665-0df04019109b -a  d7c11fd7-ec1a-40c7-ba25-7da1e8b730ce -n "snowflake_framework_ccf" -c ingest 
+
+#tfa 
+./update_datapod_ds.sh -d fa95251d-955b-4254-bd5f-1da0b1bdecbd -a f9989020-41b5-448c-830b-cf4b9d26ad87 -n "snowflake_framework_tfa" -c ingest
+
+#trial
+./update_datapod_ds.sh -d e36a03e1-dd1b-4a51-9de4-f26c1948169b -a 81099cfa-a20f-4c2d-8496-5dd6caef0787 -n "snowflake_framework_trl" -c ingest 
+
+
+
+
+#HRA 
+./update_datapod_ds.sh -d 0a11938e-2f0e-4c67-beef-dae85ddfe2ab -a d70463da-4c5c-42d6-97e6-9c63a8723153 -n "snowflake_framework_tfa" -c ingest
+
+#SSA 
+./update_datapod_ds.sh -d ae06eea7-54ff-49c0-bec5-971c1c8095b3 -a a93ba7a0-51c9-11e8-9c2d-fa7ae01bbyog -n "snowflake_framework_tfa" -c ingest
+
+#Admin
+./update_datapod_ds.sh -d 917afe67-2042-4400-92b3-a9b96c66c04e -a d7c11fd7-ec1a-40c7-ba25-7da1e8b730cb -n "snowflake_framework_admin" -c datapod
+
+#aml
+ ./update_datapod_ds.sh -d fc22eac9-53a9-496f-bd61-89da0de7206c -a d7c11fd7-ec1a-40c7-ba25-7da1e8b730cz -n "snowflake_framework_aml" -c datapod
+
+#edw 
+./update_datapod_ds.sh -d 0156c583-b68a-4eb6-8f01-e80616e674d8 -a 018830a8-a30b-4614-b991-84d049c0c269 -n "snowflake_framework_edw" -c datapod
+
+#cua
+./update_datapod_ds.sh -d c1c0f873-ac44-4f3b-b6e5-0a3a59a76f42 -a dbb616f5-c259-469f-a121-7392bf408267 -n "snowflake_framework_cua" -c datapod
+
+
+#cfa
+./update_datapod_ds.sh -d 232bc2eb-1a11-4343-957c-3e3b63b5ccd7 -a 1abde585-a6f2-4282-90b0-b5b6a403cc67 -n "snowflake_framework_cfa" -c datapod
+
+#cra 
+./update_datapod_ds.sh -d d10829a4-855e-4bdf-a3bc-836e75468ced -a d4a9cc7e-16ea-4b0d-91a5-a0b74ef26250 -n "snowflake_framework_crf" -c datapod
+
+#ccf
+./update_datapod_ds.sh -d c814bc71-d0fc-4736-9665-0df04019109b -a  d7c11fd7-ec1a-40c7-ba25-7da1e8b730ce -n "snowflake_framework_ccf" -c datapod 
+
+#tfa 
+./update_datapod_ds.sh -d fa95251d-955b-4254-bd5f-1da0b1bdecbd -a f9989020-41b5-448c-830b-cf4b9d26ad87 -n "snowflake_framework_tfa" -c datapod
+
+#trial
+./update_datapod_ds.sh -d e36a03e1-dd1b-4a51-9de4-f26c1948169b -a 81099cfa-a20f-4c2d-8496-5dd6caef0787 -n "snowflake_framework_trl" -c datapod 
+
+
+#HRA 
+./update_datapod_ds.sh -d 0a11938e-2f0e-4c67-beef-dae85ddfe2ab -a d70463da-4c5c-42d6-97e6-9c63a8723153 -n "snowflake_framework_tfa" -c datapod
+
+#SSA 
+./update_datapod_ds.sh -d ae06eea7-54ff-49c0-bec5-971c1c8095b3 -a a93ba7a0-51c9-11e8-9c2d-fa7ae01bbyog -n "snowflake_framework_tfa" -c datapod
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+#mongodb script for formula update
+
+in terminal 
+mongo --authenticationDatabase "admin" -u "admin" -p "20Admin19"
+use framework;
+db.getCollection("formula").find({'formulaInfo.value': 
+     { $regex: /range interval|-1 DAY PRECEDING/i}}).forEach(
+  function (elem) {
+     print(elem.uuid)
+      for (var i = 0; i < elem.formulaInfo.length; i++) {
+       if(elem.formulaInfo[i].value){
+      printjson(elem.formulaInfo[i].value.match(/.RANGE INTERVAL./i))
+       if(elem.formulaInfo[i].value=="RANGE INTERVAL"){
+           elem.formulaInfo[i].value="ROWS BETWEEN"
+           print("Found RANGE INTERVAL")
+
+       }
+       else if(elem.formulaInfo[i].value=="-1 DAY PRECEDING"){
+           elem.formulaInfo[i].value="PRECEDING AND 1 PRECEDING"
+           print("Found -1 DAY PRECEDING")
+       }
+       else {
+            elem.formulaInfo[i].value= elem.formulaInfo[i].value
+           }
+
+      }}
+
+      var temp=elem.formulaInfo
+      //printjson(elem.formulaInfo)
+        db.getCollection("formula").updateMany({ _id: elem._id },          
+       { "$set": {"formulaInfo": temp} }      
+       );
+ })
+
+
+
+thi is wrong command for update datasource
+#Update datasource cred
+cd /app/framework/bin/
+./update_datasource_cred.sh -u inferyx -p 20Inferyx19 -D framework -A jepnsoi-uyb13101 -d inferyx -su inferyx -sp 20Inferyx19 -w compute_wh
+
+correct command
+===================================================================================================================================================================================
+cd /app/framework/bin$ 
+./update_datasource_cred.sh -u inferyx -p 20Inferyx19 -D framework -A jepnsoi-uyb13101 -d inferyx -su inferyx -sp 'fCTL2YbGwNMy0/KL9HGQHw==' -w compute_wh   this is correct command
+===================================================================================================================================================================================
+
+#Then go in 
+cd /app/framework/bin$ 
+and run create all db commands 
+./create_all_db.sh -o all -a all -s all -d snowflake -D inferyx -u inferyx -p 20Inferyx19 -A jepnsoi-uyb13101 -w compute_wh
+
+# After that go in snowflake and check where all that is relfected or not 
+
+refernce lik -->  https://app.snowflake.com/jepnsoi/uyb13101/#/data/databases/INFERYX/schemas/FRAMEWORK_AML/table/BANK/data-preview
+
+
+
+browser link http://3.110.161.36/framework/app/index.html#!/Admin/MigrationAssist?type=export
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

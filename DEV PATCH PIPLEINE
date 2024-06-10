@@ -1,0 +1,91 @@
+pipeline {    
+    agent {
+        label params.AGENT == "master" ? "" : params.AGENT 
+    }
+    parameters {
+        choice(name: "BUILD_TYPE", choices: ["TEST" ,"FINAL"]) 
+        string(name: "VERSION", defaultValue: '5.3.0', description: 'Enter project version?')
+        string(name: "BRANCH", defaultValue: 'master', description: 'Enter git branch')
+        string(name: "CLIENTNAME", defaultValue: 'inferyx', description: 'Enter client name')
+        
+    }
+	environment {
+               	BUILD_TYPE=params.BUILD_TYPE.toLowerCase()
+            }    
+  stages { 
+   
+    stage('Start Build') {
+      steps {
+
+        sh '''
+             sudo -u inferyx /app/framework/bin/build_framework.sh -t ${BUILD_TYPE} -v ${VERSION} -b ${BRANCH} -c ${CLIENTNAME} -o ${CLIENTNAME}
+
+          '''
+      }
+    }
+    
+    stage('Sending build completed notification') {
+      steps {
+        script {
+                emailext(attachLog: false, 
+		compressLog: false,
+		mimeType: 'text/html',
+		replyTo: '',             
+		from: 'dev-installer@inferyx.com', 
+		to: 'alerts@inferyx.com',
+		subject: "${CLIENTNAME} : Build completed v${VERSION} for v${CLIENTNAME} ",
+                body: """
+		        <!DOCTYPE html>
+			<html>
+			<head>
+				<style>
+					table {
+					  font-family: arial, sans-serif;
+					  border-collapse: collapse;
+					  width: 100%;
+					}
+
+					td, th {
+					  border: 1px solid #dddddd;
+					  text-align: left;
+					  padding: 8px;
+					}
+
+					tr:nth-child(even) {
+					  background-color: #dddddd;
+					}
+					h2{
+						text-align: center;
+						background-color: green;
+						}
+				</style>
+			</head>
+				<body>
+
+				<h2>Log Details</h2>
+
+				<table>
+				  <tr>
+				    <th>VERSION NUMBER</th>
+				    <th>BRANCH NAME</th>
+				    <th>CLIENT NAME</th>
+				  </tr>
+				  <tr>
+				    <td>${env.VERSION}</td>
+				    <td>${env.BRANCH}</td>
+				    <td>${env.CLIENTNAME}</td>
+				  </tr>
+				</table>
+
+				</body>
+			</html>
+
+                """                
+		)
+            
+            }
+      }
+
+        }
+      }
+    }
